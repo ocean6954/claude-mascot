@@ -68,9 +68,8 @@ function pickTurnColor(): void {
 
 function startAnimation($: EngineInterface): void {
   if (timer) return
-  current = pickMascot()
-  if (!current) return
   const mascot = current
+  if (!mascot) return
   frame = 0
   timer = $.clock.every(mascot.frameMs, () => {
     frame = (frame + 1) % mascot.frames.length
@@ -92,19 +91,21 @@ function mascotLines(mascot: Mascot): readonly string[] {
 }
 
 export const register: Register = on => {
+  // The next turn's mascot is chosen while no turn runs: the spinner is drawn before turn.start
+  // reaches this plugin, so whatever `current` holds at that moment is what shows first.
   on('session.start', async ($, event, next) => {
     await loadMascots($)
+    current ??= pickMascot()
     return next(event)
   })
 
   on('turn.start', async ($, event, next) => {
-    if (runningTurns.size === 0) {
-      // Nothing loaded yet (a session.start that never ran): read now, once.
+    if (runningTurns.size === 0 && !current) {
+      // Nothing chosen yet (a session.start that never ran): read now, once.
       if (mascots.length === 0) await loadMascots($)
-      pickTurnColor()
+      current = pickMascot()
     }
     runningTurns.add(event.turnId)
-    // Picked before anything is awaited, so the first drawing of the spinner already has this turn's mascot.
     startAnimation($)
     return next(event)
   })
@@ -113,8 +114,11 @@ export const register: Register = on => {
     runningTurns.delete(event.turnId)
     if (runningTurns.size === 0) {
       stopAnimation()
-      // Reread the directories between turns, so a file added or edited shows up without a restart.
+      // Reread the directories between turns, so a file added or edited shows up without a restart,
+      // then choose who comes out next time.
       await loadMascots($)
+      current = pickMascot()
+      pickTurnColor()
     }
     return next(event)
   })
