@@ -71,6 +71,7 @@ function startAnimation($: EngineInterface): void {
   current = pickMascot()
   if (!current) return
   const mascot = current
+  frame = 0
   timer = $.clock.every(mascot.frameMs, () => {
     frame = (frame + 1) % mascot.frames.length
     $.ui.invalidate('ui.render')
@@ -78,16 +79,16 @@ function startAnimation($: EngineInterface): void {
   $.ui.invalidate('ui.render')
 }
 
-function stopAnimation($: EngineInterface): void {
+// Stopping leaves the frame as it is: the spinner is about to go, and redrawing it in another pose
+// would flash the mascot's still for an instant first.
+function stopAnimation(): void {
   timer?.cancel()
   timer = undefined
-  frame = 0
-  $.ui.invalidate('ui.render')
 }
 
-/** The mascot's lines: the animation's frame while it runs, else standing still. */
+/** The mascot's lines: the frame reached, which is the still when nothing has ever run. */
 function mascotLines(mascot: Mascot): readonly string[] {
-  return (timer && mascot.frames[frame]) || mascot.still
+  return mascot.frames[frame] ?? mascot.still
 }
 
 export const register: Register = on => {
@@ -111,7 +112,7 @@ export const register: Register = on => {
   on('turn.complete', async ($, event, next) => {
     runningTurns.delete(event.turnId)
     if (runningTurns.size === 0) {
-      stopAnimation($)
+      stopAnimation()
       // Reread the directories between turns, so a file added or edited shows up without a restart.
       await loadMascots($)
     }
