@@ -56,9 +56,10 @@ async function loadMascots($: EngineInterface): Promise<void> {
   if (loaded.length > 0) mascots = loaded
 }
 
+/** A mascot other than the last one; compared by name, since a reload makes new objects of them all. */
 function pickMascot(): Mascot | undefined {
-  const others = mascots.filter(mascot => mascot !== current)
-  return others[Math.floor(Math.random() * others.length)] ?? current
+  const others = mascots.filter(mascot => mascot.name !== current?.name)
+  return others[Math.floor(Math.random() * others.length)] ?? mascots[0] ?? current
 }
 
 function pickTurnColor(): void {
