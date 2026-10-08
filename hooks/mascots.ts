@@ -51,8 +51,10 @@ export function parseMascot(name: string, text: string): Mascot {
   const rows = still.lines.length
   const columns = Math.max(...sections.flatMap(section => section.lines.map(width)))
   const fit = (lines: string[], kind: string): string[] => {
-    if (lines.length !== rows) throw new Error(`${name}: a ${kind} has ${lines.length} rows, the still ${rows}`)
-    return lines.map(line => line + ' '.repeat(columns - width(line)))
+    // An overlay that ends in blank rows lost them to the trimming above; it may stop short.
+    const filled = kind === 'overlay' && lines.length < rows ? [...lines, ...Array(rows - lines.length).fill('')] : lines
+    if (filled.length !== rows) throw new Error(`${name}: a ${kind} has ${filled.length} rows, the still ${rows}`)
+    return filled.map(line => line + ' '.repeat(columns - width(line)))
   }
   const stillLines = fit(still.lines, 'still')
   const frames = sections

@@ -46,6 +46,9 @@ test('a mascot file without frames stands still; one without a still is refused'
   expect(still.color).toBeUndefined()
   expect(() => parseMascot('empty', 'color: red\n')).toThrow(/needs a \[still\]/)
   expect(() => parseMascot('ragged', '[still]\n█\n[frame]\n█\n█\n')).toThrow(/rows/)
+  // An overlay whose last rows are blank is padded; one taller than the still is refused.
+  expect(parseMascot('short', '[still]\n█\n█\n█\n[overlay]\n▀\n\n\n').overlay?.lines).toEqual(['▀', ' ', ' '])
+  expect(() => parseMascot('tall', '[still]\n█\n[overlay]\n▀\n▀\n')).toThrow(/rows/)
 })
 
 test('a row splits into runs: the body in its color, the overlay in its own', () => {
