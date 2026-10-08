@@ -1,0 +1,12 @@
+{
+  "name": "mascot-marketplace",
+  "description": "mascot プラグインの配布用マーケットプレイス",
+  "owner": { "name": "snsnap1191" },
+  "plugins": [
+    {
+      "name": "mascot",
+      "source": "./",
+      "description": "Claude が考えている間、スピナーの横でマスコットが動く。自作のマスコットも追加できる"
+    }
+  ]
+}
