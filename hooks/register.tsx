@@ -75,6 +75,7 @@ function startAnimation($: EngineInterface): void {
     frame = (frame + 1) % mascot.frames.length
     $.ui.invalidate('ui.render')
   })
+  $.ui.invalidate('ui.render')
 }
 
 function stopAnimation($: EngineInterface): void {
@@ -97,18 +98,23 @@ export const register: Register = on => {
 
   on('turn.start', async ($, event, next) => {
     if (runningTurns.size === 0) {
-      // Reread the directories each turn, so a file added or edited shows up without a restart.
-      await loadMascots($)
+      // Nothing loaded yet (a session.start that never ran): read now, once.
+      if (mascots.length === 0) await loadMascots($)
       pickTurnColor()
     }
     runningTurns.add(event.turnId)
+    // Picked before anything is awaited, so the first drawing of the spinner already has this turn's mascot.
     startAnimation($)
     return next(event)
   })
 
   on('turn.complete', async ($, event, next) => {
     runningTurns.delete(event.turnId)
-    if (runningTurns.size === 0) stopAnimation($)
+    if (runningTurns.size === 0) {
+      stopAnimation($)
+      // Reread the directories between turns, so a file added or edited shows up without a restart.
+      await loadMascots($)
+    }
     return next(event)
   })
 
